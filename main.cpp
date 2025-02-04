@@ -3,6 +3,8 @@
 #include"mcts.h"
 #include <exception>
 #include <iostream>
+#include "utils.h"
+#include "log.h"
 
 MCTS mcts;
 
@@ -30,35 +32,34 @@ void print_board(GameState s, int x=-1, int y=-1) {
 }
 
 void game() {
-    GameState s;
-    Player player = Black;
-    for(int i = 0; i < BOARD_SIZE; ++i) {
-        for(int j = 0; j < BOARD_SIZE; ++j) {
-            s.board[i][j] = None;
-        }
-    }
+    Go game;
     mcts.init_game();
+    mcts.game = &game;
     Player winner = None;
+
     int step = 0;
-    print_board(s);
+    print_board(game.state);
     while(winner == None) {
-        mcts.think_by_time(std::chrono::seconds(5));
+        log(Info, fstring("step: %d", game.get_step()));
+        mcts.think_by_time(std::chrono::seconds(19));
         mcts.print_winning_rate();
         Action action = mcts.take_action();
-        s.board[action.first][action.second] = player;
         step += 1;
-        printf("Move %d: %s %02d %02d\n", step, player == Black ? "Black" : "White", action.first, action.second);
-        player = Gobang::next_player(player);
-        winner = Gobang::get_winner(s, action.first, action.second);
-        print_board(s, action.first, action.second);
-        if(step == BOARD_SIZE * BOARD_SIZE) {
-            printf("Balanced\n");
-            mcts.serialize();
-            return;
+        printf("Move %d: %s %02d %02d\n", step, game.player == Black ? "Black" : "White", action.first, action.second);
+        game.move(action);
+        print_board(game.state, action.first, action.second);
+        if(game.over) {
+            winner = game.winner;
+            break;
         }
     }
-    printf("winner: %s\n", winner == Black ? "Black" : "White");
-    mcts.serialize();
+    if(winner = Black) {
+        puts("winner: Black");
+    } else if(winner = White) {
+        puts("winner: White");
+    } else {
+        puts("Balanced");
+    }
 }
 
 

@@ -7,32 +7,17 @@
 #include <chrono>
 #include <random>
 
-std::string fstring(const char* format, ...) {
-    va_list args;
-    va_start(args, format);
-    const int length = vsnprintf(nullptr, 0, format, args);
-    va_end(args);
+std::string fstring(const char* format, ...);
 
-    if (length < 0) {
-        return {};
+std::string durationToString(const std::chrono::duration<double>& duration);
+
+int random(int length);
+
+struct pair_hash {
+    template <class T1, class T2>
+    std::size_t operator() (const std::pair<T1, T2>& p) const {
+        auto hash1 = std::hash<T1>{}(p.first);
+        auto hash2 = std::hash<T2>{}(p.second);
+        return hash1 ^ (hash2 << 16);
     }
-
-    va_start(args, format);
-    std::string result(length, '\0');
-    vsnprintf(result.data(), length + 1, format, args);
-    va_end(args);
-
-    return result;
-}
-
-std::string durationToString(const std::chrono::duration<double>& duration) {
-    auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
-    return fstring("%d.%ds", milliseconds / 1000, milliseconds % 1000);
-}
-
-int random(int length) { // [0, length)
-    static std::random_device rd;
-    static std::mt19937 gen(rd());
-    std::uniform_int_distribution<> dis(0, length - 1);
-    return dis(gen);
-}
+};

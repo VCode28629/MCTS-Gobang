@@ -1,4 +1,5 @@
 #pragma once
 
-const int BOARD_SIZE = 8;
-const int WIN_LINE = 5;
+const int BOARD_SIZE = 9;
+
+const float KOMI = 7;

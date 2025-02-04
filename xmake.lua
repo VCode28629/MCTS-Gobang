@@ -1,5 +1,5 @@
 set_languages("c++17")
-add_cflags("-O3")
+set_optimize("fastest")
 
 target("main")
     set_kind("binary")
