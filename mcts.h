@@ -47,4 +47,5 @@ public:
     void think_by_time(std::chrono::duration<double>);
     Action take_action();
     void print_winning_rate();
+    void print_visit_times();
 };

@@ -106,7 +106,7 @@ Player MCTS::simulation() {
 }
 
 void MCTS::backup(MCTNode *node, Player winner) {
-    while(node != nullptr) {
+    while(node != now_state->parent) {
         ++node->visits;
         if(winner == None) node->wins += 0.5;
         else if(winner != node->player) {node->wins += 1;}
@@ -200,4 +200,28 @@ void MCTS::print_winning_rate() {
         putchar('\n');
     }
     printf("%6.1lf\n", pass_p * 100);
+}
+
+void MCTS::print_visit_times() {
+    int p[BOARD_SIZE][BOARD_SIZE];
+    for(int i = 0; i < BOARD_SIZE; ++i) {
+        for(int j = 0; j < BOARD_SIZE; ++j) {
+            p[i][j] = 0;
+        }
+    }
+    int pass_p = -1;
+    for(int i = 0; i < now_state->children.size(); ++i) {
+        if(now_state->actions[i].first == -1) {
+            pass_p = now_state->children[i]->visits;
+        } else {
+            p[now_state->actions[i].first][now_state->actions[i].second] = now_state->children[i]->visits;
+        }
+    }
+    for(int i = 0; i < BOARD_SIZE; ++i) {
+        for(int j = 0; j < BOARD_SIZE; ++j) {
+            printf("%6d ", p[i][j]);
+        }
+        putchar('\n');
+    }
+    printf("%6d\n", pass_p);
 }

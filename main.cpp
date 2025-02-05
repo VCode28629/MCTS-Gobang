@@ -43,6 +43,7 @@ void game() {
         log(Info, fstring("step: %d", game.get_step()));
         mcts.think_by_time(std::chrono::seconds(19));
         mcts.print_winning_rate();
+        mcts.print_visit_times();
         Action action = mcts.take_action();
         step += 1;
         printf("Move %d: %s %02d %02d\n", step, game.player == Black ? "Black" : "White", action.first, action.second);
