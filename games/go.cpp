@@ -4,7 +4,7 @@
 #include <queue>
 #include <unordered_set>
 
-#include "utils.h"
+#include "../utils.h"
 
 const int Go::step[4][2] = {{1, 0}, {0, 1}, {-1, 0}, {0, -1}};
 

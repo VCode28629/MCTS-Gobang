@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdio>
+
 #include "gameBase.h"
 
 const int GO_BOARD_SIZE = 15;
@@ -36,4 +38,25 @@ class Go : public Game {
     virtual std::vector<Action> get_legal_moves();
     virtual void move(Action action);
     virtual void undo();
+    virtual void print_board() {
+        printf("  ");
+        for (int i = 0; i < GO_BOARD_SIZE; ++i) {
+            printf(" %02d", i);
+        }
+        putchar('\n');
+        for (int i = 0; i < GO_BOARD_SIZE; ++i) {
+            printf("%02d", i);
+            for (int j = 0; j < GO_BOARD_SIZE; ++j) {
+                if (state.board[i][j] == None) {
+                    printf("  .");
+                } else if (state.board[i][j] == Black) {
+                    printf("  X");
+                } else if (state.board[i][j] == White) {
+                    printf("  O");
+                }
+            }
+            putchar('\n');
+        }
+        if (pass) puts("passed");
+    }
 };

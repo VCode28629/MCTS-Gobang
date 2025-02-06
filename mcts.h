@@ -32,6 +32,7 @@ class MCTS {
     ~MCTS();
     void think_by_times(int times);
     void think_by_time(std::chrono::duration<double>);
+    void think_until_good(double delta);
     Action take_action();
     // void print_winning_rate();
     // void print_visit_times();

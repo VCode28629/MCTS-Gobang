@@ -3,6 +3,8 @@
 #include <cmath>
 #include <cstdio>
 #include <fstream>
+#include <queue>
+#include <thread>
 
 #include "log.h"
 #include "utils.h"
@@ -123,6 +125,66 @@ void MCTS::think_by_time(std::chrono::duration<double> limit) {
     log(Info, "------end thinking------");
 }
 
+void MCTS::think_until_good(double delta) {
+    log(Info, "------start thinking------");
+    auto start = std::chrono::high_resolution_clock::now();
+
+    auto moves = game->get_legal_moves();
+    std::deque<std::vector<double>> queue;
+    bool odd = true;
+    auto push = [&](const std::vector<double> &vec) {
+        if (!queue.empty() && odd) queue.pop_front();
+        queue.push_back(vec);
+        odd = !odd;
+    };
+
+    auto delta_func = [](const std::vector<double> &a,
+                         const std::vector<double> &b) {
+        double ret = 0;
+        for (int i = 0; i < a.size(); ++i) {
+            ret = std::max(ret, std::abs(a[i] - b[i]));
+        }
+        return ret;
+    };
+
+    int cnt = 0;
+    auto think_and_push = [&]() {
+        think_once();
+        ++cnt;
+        std::vector<double> vec;
+        for (int i = 0; i < root->children.size(); ++i) {
+            auto child = root->children[i];
+            if (child->visits == 0) {
+                vec.push_back(std::numeric_limits<double>::max());
+                continue;
+            }
+            vec.push_back(
+                (double)child->wins / child->visits +
+                std::sqrt(2 * std::log(root->visits) / child->visits));
+        }
+        push(vec);
+
+        if (cnt % 10000 == 0) {
+            log(Info, fstring("current think times: %d. delta: %lf", cnt,
+                              delta_func(queue.front(), queue.back())));
+        }
+    };
+
+    for (int i = 0; i < 10 * moves.size(); ++i) {
+        think_and_push();
+    }
+
+    while (delta_func(queue.front(), queue.back()) >= delta) {
+        think_and_push();
+    }
+
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = end - start;
+    log(Info, fstring("thought times: %d", cnt));
+    log(Info, fstring("thought time: %s", durationToString(duration).c_str()));
+    log(Info, "------end thinking------");
+}
+
 Action MCTS::take_action() {
     if (root == nullptr || root->children.empty())
         return std::make_pair(-1, -1);
@@ -135,7 +197,13 @@ Action MCTS::take_action() {
     auto selected = root->children[index];
     Action ret = root->actions[index];
     root->children[index] = nullptr;
-    delete root;
+    std::thread(
+        [](MCTNode *root) {
+            delete root;
+            log(Debug, "delete complete.");
+        },
+        root)
+        .detach();
     root = selected;
     root->parent = nullptr;
     return ret;

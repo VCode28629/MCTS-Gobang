@@ -7,29 +7,6 @@
 #include "mcts.h"
 #include "utils.h"
 
-void print_board(GoState s, int x = -1, int y = -1) {
-    // printf("  ");
-    // for(int i = 0; i < BOARD_SIZE; ++i) {
-    //     printf(" %02d", i);
-    // }
-    // putchar('\n');
-    // for(int i = 0; i < BOARD_SIZE; ++i) {
-    //     printf("%02d", i);
-    //     for(int j = 0; j < BOARD_SIZE; ++j) {
-    //         // if(x == i && y == j) printf("\033[31m");
-    //         if(s.board[i][j] == None) {
-    //             printf("  .");
-    //         } else if(s.board[i][j] == Black) {
-    //             printf("  X");
-    //         } else if(s.board[i][j] == White) {
-    //             printf("  O");
-    //         }
-    //         // if(x == i && y == j) printf("\033[0m");
-    //     }
-    //     putchar('\n');
-    // }
-}
-
 void game() {
     MCTS mcts;
     Gobang game;
@@ -37,10 +14,10 @@ void game() {
     Player winner = None;
 
     int step = 0;
-    // print_board(game.state);
+    game.print_board();
     while (winner == None) {
         log(Info, fstring("step: %d", game.get_step()));
-        mcts.think_by_time(std::chrono::seconds(2));
+        mcts.think_until_good(0.001);
         // mcts.print_winning_rate();
         // mcts.print_visit_times();
         Action action = mcts.take_action();
@@ -49,15 +26,15 @@ void game() {
                game.player == Black ? "Black" : "White", action.first,
                action.second);
         game.move(action);
-        // print_board(game.state, action.first, action.second);
+        game.print_board();
         if (game.over) {
             winner = game.winner;
             break;
         }
     }
-    if (winner = Black) {
+    if (winner == Black) {
         puts("winner: Black");
-    } else if (winner = White) {
+    } else if (winner == White) {
         puts("winner: White");
     } else {
         puts("Balanced");

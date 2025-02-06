@@ -1,12 +1,15 @@
 #include "gobang.h"
 
-Gobang::Gobang(int board_size, int win_line) {
+Gobang::Gobang() {
     for (int i = 0; i < GOBANG_BOARD_SIZE; ++i) {
         for (int j = 0; j < GOBANG_BOARD_SIZE; ++j) {
             state.board[i][j] = None;
         }
     }
     player = Black;
+    winner = None;
+    over = false;
+    info_history.push(std::make_tuple(player, over, winner));
 }
 
 int Gobang::get_step() { return actions.size() + 1; }
@@ -27,14 +30,18 @@ void Gobang::move(Action action) {
     actions.push_back(action);
     player = next_player(player);
     Player winner = get_winner(action.first, action.second);
-    if (winner == None) return;
-    over = true;
-    this->winner = winner;
+    if (winner != None) {
+        over = true;
+        this->winner = winner;
+    }
+    info_history.push(std::make_tuple(player, over, winner));
 }
 
 void Gobang::undo() {
     state.board[actions.back().first][actions.back().second] = None;
     actions.pop_back();
+    info_history.pop();
+    std::tie(player, over, winner) = info_history.top();
 }
 
 Player Gobang::get_winner(int x, int y) {

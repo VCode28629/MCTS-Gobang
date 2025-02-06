@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdio>
+
 #include "gameBase.h"
 
 const int GOBANG_BOARD_SIZE = 15;
@@ -20,12 +22,34 @@ struct GobangState {
 class Gobang : public Game {
     GobangState state;
     std::vector<Action> actions;
-    Player Gobang::get_winner(int x, int y);
+    Player get_winner(int x, int y);
+    // player, over, winner;
+    std::stack<std::tuple<Player, bool, Player> > info_history;
 
    public:
-    Gobang(int board_size = 15, int win_line = 5);
+    Gobang();
     virtual int get_step();
     virtual std::vector<Action> get_legal_moves();
     virtual void move(Action action);
     virtual void undo();
+    virtual void print_board() {
+        printf("  ");
+        for (int i = 0; i < GOBANG_BOARD_SIZE; ++i) {
+            printf(" %02d", i);
+        }
+        putchar('\n');
+        for (int i = 0; i < GOBANG_BOARD_SIZE; ++i) {
+            printf("%02d", i);
+            for (int j = 0; j < GOBANG_BOARD_SIZE; ++j) {
+                if (state.board[i][j] == None) {
+                    printf("  .");
+                } else if (state.board[i][j] == Black) {
+                    printf("  X");
+                } else if (state.board[i][j] == White) {
+                    printf("  O");
+                }
+            }
+            putchar('\n');
+        }
+    }
 };

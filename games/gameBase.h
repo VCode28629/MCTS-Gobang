@@ -25,4 +25,6 @@ class Game {
     virtual inline Player next_player(Player p) {
         return static_cast<Player>(Black + White - p);
     }
+
+    virtual void print_board() {}
 };
