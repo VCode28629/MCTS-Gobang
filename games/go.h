@@ -8,9 +8,9 @@ const float KOMI = 7.5;
 struct GoState {
     Player board[GO_BOARD_SIZE][GO_BOARD_SIZE];
     bool operator==(const GoState &s) const {
-        for(int i = 0; i < GO_BOARD_SIZE; ++i) {
-            for(int j = 0; j < GO_BOARD_SIZE; ++j) {
-                if(board[i][j] != s.board[i][j]) return false;
+        for (int i = 0; i < GO_BOARD_SIZE; ++i) {
+            for (int j = 0; j < GO_BOARD_SIZE; ++j) {
+                if (board[i][j] != s.board[i][j]) return false;
             }
         }
         return true;
@@ -29,7 +29,8 @@ class Go : public Game {
     GoState next_state(GoState state, Player player, Action action);
     bool can_move(Action action);
     static const int step[4][2];
-public:
+
+   public:
     Go();
     virtual int get_step();
     virtual std::vector<Action> get_legal_moves();

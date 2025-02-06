@@ -1,13 +1,13 @@
-#include<cstdio>
-#include "games/games.h"
-#include"mcts.h"
+#include <cstdio>
 #include <exception>
 #include <iostream>
-#include "utils.h"
+
+#include "games/games.h"
 #include "log.h"
+#include "mcts.h"
+#include "utils.h"
 
-
-void print_board(GoState s, int x=-1, int y=-1) {
+void print_board(GoState s, int x = -1, int y = -1) {
     // printf("  ");
     // for(int i = 0; i < BOARD_SIZE; ++i) {
     //     printf(" %02d", i);
@@ -38,36 +38,37 @@ void game() {
 
     int step = 0;
     // print_board(game.state);
-    while(winner == None) {
+    while (winner == None) {
         log(Info, fstring("step: %d", game.get_step()));
         mcts.think_by_time(std::chrono::seconds(2));
         // mcts.print_winning_rate();
         // mcts.print_visit_times();
         Action action = mcts.take_action();
         step += 1;
-        printf("Move %d: %s %02d %02d\n", step, game.player == Black ? "Black" : "White", action.first, action.second);
+        printf("Move %d: %s %02d %02d\n", step,
+               game.player == Black ? "Black" : "White", action.first,
+               action.second);
         game.move(action);
         // print_board(game.state, action.first, action.second);
-        if(game.over) {
+        if (game.over) {
             winner = game.winner;
             break;
         }
     }
-    if(winner = Black) {
+    if (winner = Black) {
         puts("winner: Black");
-    } else if(winner = White) {
+    } else if (winner = White) {
         puts("winner: White");
     } else {
         puts("Balanced");
     }
 }
 
-
 int main() {
-    while(true) {
+    while (true) {
         try {
             game();
-        } catch(const std::exception& e) {
+        } catch (const std::exception &e) {
             // 处理异常
             std::cerr << "Catched exception: " << e.what() << '\n';
         }

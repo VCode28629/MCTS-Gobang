@@ -1,36 +1,38 @@
 #include "mcts.h"
+
+#include <cmath>
+#include <cstdio>
+#include <fstream>
+
 #include "log.h"
 #include "utils.h"
-#include<cstdio>
-#include<cmath>
-#include<fstream>
 
-MCTNode::MCTNode(Player p, MCTNode* par) : player(p), parent(par), wins(0), visits(0) {}
+MCTNode::MCTNode(Player p, MCTNode *par)
+    : player(p), parent(par), wins(0), visits(0) {}
 
 MCTNode::~MCTNode() {
-    for (auto child : children) if(child != nullptr) delete child;
+    for (auto child : children)
+        if (child != nullptr) delete child;
 }
 
-MCTS::MCTS() {
-    this->root = new MCTNode(Black, nullptr);
-}
+MCTS::MCTS() { this->root = new MCTNode(Black, nullptr); }
 
-MCTS::~MCTS() {
-    delete this->root;
-}
+MCTS::~MCTS() { delete this->root; }
 
 MCTNode *MCTS::selection() {
     MCTNode *node = this->root;
-    while(!node->children.empty()) {
+    while (!node->children.empty()) {
         double best_score = -std::numeric_limits<double>::max();
         int best_child_index = -1;
-        for(int i = 0; i < node->children.size(); ++i) {
+        for (int i = 0; i < node->children.size(); ++i) {
             auto child = node->children[i];
-            if(child->visits == 0) {
+            if (child->visits == 0) {
                 game->move(node->actions[i]);
                 return child;
             }
-            double score = (double)child->wins / child->visits + std::sqrt(2 * std::log(node->visits) / child->visits);
+            double score =
+                (double)child->wins / child->visits +
+                std::sqrt(2 * std::log(node->visits) / child->visits);
             if (score <= best_score) continue;
             best_score = score;
             best_child_index = i;
@@ -43,29 +45,33 @@ MCTNode *MCTS::selection() {
 
 void MCTS::expansion(MCTNode *node) {
     auto moves = game->get_legal_moves();
-    for(auto move : moves) {
-        node->children.push_back(new MCTNode(game->next_player(node->player), node));
+    for (auto move : moves) {
+        node->children.push_back(
+            new MCTNode(game->next_player(node->player), node));
         node->actions.push_back(move);
     }
 }
 
 Player MCTS::simulation() {
     int size = game->get_step();
-    while(!game->over) {
+    while (!game->over) {
         auto moves = game->get_legal_moves();
         Action move = moves[random(moves.size())];
         game->move(move);
     }
     Player winner = game->winner;
-    while(game->get_step() > size) game->undo();
+    while (game->get_step() > size) game->undo();
     return winner;
 }
 
 void MCTS::backup(MCTNode *node, Player winner) {
-    while(node != nullptr) {
+    while (node != nullptr) {
         ++node->visits;
-        if(winner == None) node->wins += 0.5;
-        else if(winner != node->player) {node->wins += 1;}
+        if (winner == None)
+            node->wins += 0.5;
+        else if (winner != node->player) {
+            node->wins += 1;
+        }
         node = node->parent;
     }
 }
@@ -74,14 +80,14 @@ void MCTS::think_once() {
     int size = game->get_step();
     MCTNode *leaf = this->selection();
     this->expansion(leaf);
-    if(!leaf->children.empty()) {
+    if (!leaf->children.empty()) {
         int index = random(leaf->children.size());
         game->move(leaf->actions[index]);
         leaf = leaf->children[index];
     }
     Player winner = this->simulation();
     backup(leaf, winner);
-    while(game->get_step() > size) game->undo();
+    while (game->get_step() > size) game->undo();
 }
 
 void MCTS::think_by_times(int times) {
@@ -89,7 +95,7 @@ void MCTS::think_by_times(int times) {
     log(Info, fstring("set thought times: %d", times));
     auto start = std::chrono::high_resolution_clock::now();
 
-    for(int i = 1; i <= times; ++i) {
+    for (int i = 1; i <= times; ++i) {
         this->think_once();
     }
 
@@ -101,12 +107,13 @@ void MCTS::think_by_times(int times) {
 
 void MCTS::think_by_time(std::chrono::duration<double> limit) {
     log(Info, "------start thinking------");
-    log(Info, fstring("set thinking time: %s", durationToString(limit).c_str()));
+    log(Info,
+        fstring("set thinking time: %s", durationToString(limit).c_str()));
     auto start = std::chrono::high_resolution_clock::now();
     auto now = start;
 
     int cnt = 0;
-    while(now - start < limit) {
+    while (now - start < limit) {
         this->think_once();
         ++cnt;
         now = std::chrono::high_resolution_clock::now();
@@ -119,10 +126,11 @@ void MCTS::think_by_time(std::chrono::duration<double> limit) {
 }
 
 Action MCTS::take_action() {
-    if(root == nullptr || root->children.empty()) return std::make_pair(-1, -1);
+    if (root == nullptr || root->children.empty())
+        return std::make_pair(-1, -1);
     int index = 0;
-    for(int i = 1; i < root->children.size(); ++i) {
-        if(root->children[i]->visits > root->children[index]->visits) {
+    for (int i = 1; i < root->children.size(); ++i) {
+        if (root->children[i]->visits > root->children[index]->visits) {
             index = i;
         }
     }
@@ -174,7 +182,8 @@ Action MCTS::take_action() {
 //         if(root->actions[i].first == -1) {
 //             pass_p = root->children[i]->visits;
 //         } else {
-//             p[root->actions[i].first][root->actions[i].second] = root->children[i]->visits;
+//             p[root->actions[i].first][root->actions[i].second] =
+//             root->children[i]->visits;
 //         }
 //     }
 //     for(int i = 0; i < BOARD_SIZE; ++i) {

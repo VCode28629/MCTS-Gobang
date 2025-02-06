@@ -1,6 +1,6 @@
 #include "utils.h"
 
-std::string fstring(const char* format, ...) {
+std::string fstring(const char *format, ...) {
     va_list args;
     va_start(args, format);
     const int length = vsnprintf(nullptr, 0, format, args);
@@ -18,12 +18,13 @@ std::string fstring(const char* format, ...) {
     return result;
 }
 
-std::string durationToString(const std::chrono::duration<double>& duration) {
-    auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
+std::string durationToString(const std::chrono::duration<double> &duration) {
+    auto milliseconds =
+        std::chrono::duration_cast<std::chrono::milliseconds>(duration);
     return fstring("%d.%ds", milliseconds / 1000, milliseconds % 1000);
 }
 
-int random(int length) { // [0, length)
+int random(int length) {  // [0, length)
     static std::random_device rd;
     static std::mt19937 gen(rd());
     std::uniform_int_distribution<> dis(0, length - 1);

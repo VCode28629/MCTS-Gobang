@@ -1,11 +1,11 @@
 #include "log.h"
-#include<cstdio>
+
+#include <cstdio>
 
 const LogLevel MIN_LOG_LEVEL = Info;
 
 const char *level_to_string(LogLevel level) {
-    switch (level)
-    {
+    switch (level) {
         case Debug:
             return "Debug";
         case Info:
@@ -19,6 +19,6 @@ const char *level_to_string(LogLevel level) {
 }
 
 void log(LogLevel level, const std::string &msg) {
-    if(level < MIN_LOG_LEVEL) return;
+    if (level < MIN_LOG_LEVEL) return;
     fprintf(stderr, "[%s]: %s\n", level_to_string(level), msg.c_str());
 }
