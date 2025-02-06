@@ -5,185 +5,59 @@
 #include<cmath>
 #include<fstream>
 
-MCTNode::MCTNode(State s, Player p, MCTNode* par) 
-    : state(s), player(p), parent(par), wins(0), visits(0) {}
+MCTNode::MCTNode(Player p, MCTNode* par) : player(p), parent(par), wins(0), visits(0) {}
 
 MCTNode::~MCTNode() {
-    for (auto child : children) delete child;
-}
-
-json MCT::serialize(MCTNode *node) {
-
-    json ret = json::object();
-    ret["state"] = json::array();
-    for (int i = 0; i < BOARD_SIZE; ++i) {
-        for (int j = 0; j < BOARD_SIZE; ++j) {
-            ret["state"].push_back(static_cast<int>(node->state.board[i][j]));
-        }
-    }
-    ret["player"] = static_cast<int>(node->player);
-    ret["wins"] = node->wins;
-    ret["visits"] = node->visits;
-    ret["children"] = json::array();
-    for (const auto& child : node->children) {
-        ret["children"].push_back(serialize(child));
-    }
-    ret["actions"] = json::array();
-    for (const auto& action : node->actions) {
-        ret["actions"].push_back(action.first * BOARD_SIZE + action.second);
-    }
-    return ret;
-}
-
-void MCT::serialize(const char *file_path) {
-    json root_json = serialize(tree_root);
-    std::ofstream ofs(file_path);
-    ofs << root_json.dump(4);
-    ofs.close();
-}
-
-void MCT::deserialize(MCTNode *node, json data) {
-    // // 反序列化基础字段
-    // node->wins = data["wins"].get<double>();
-    // node->visits = data["visits"].get<int>();
-    // for(auto& action : data["actions"]) {
-    //     int a = action.get<int>();
-    //     node->actions.push_back(std::make_pair(a / BOARD_SIZE, a % BOARD_SIZE));
-    // }
-    
-    // // 反序列化子节点
-    // for (auto& child_data : data["children"]) {
-    //     // 创建子节点state
-    //     State child_state;
-    //     for (int i = 0; i < BOARD_SIZE; ++i) {
-    //         auto row = child_data["state"][i];
-    //         for (int j = 0; j < BOARD_SIZE; ++j) {
-    //             child_state.board[i][j] = static_cast<Player>(row[j].get<int>());
-    //         }
-    //     }
-        
-    //     // 创建子节点并添加到children
-    //     Player p = static_cast<Player>(child_data["player"].get<int>());
-    //     MCTNode* child = new MCTNode(child_state, p, node);
-    //     node->children.push_back(child);
-        
-    //     // 递归反序列化
-    //     deserialize(child, child_data);
-    // }
-}
-
-void MCT::deserialize(const char *file_path) {
-    // std::ifstream ifs(file_path);
-    // json data = json::parse(ifs);
-    
-    // // 清空原有树结构
-    // delete tree_root;
-    
-    // // 重建根节点
-    // State root_state;
-    // for (int i = 0; i < BOARD_SIZE; ++i) {
-    //     auto row = data["state"][i];
-    //     for (int j = 0; j < BOARD_SIZE; ++j) {
-    //         root_state.board[i][j] = static_cast<Player>(row[j].get<int>());
-    //     }
-    // }
-    // Player p = static_cast<Player>(data["player"].get<int>());
-    // tree_root = new MCTNode(root_state, p);
-    
-    // // 递归构建子树
-    // deserialize(tree_root, data);
-}
-
-MCTNode *MCT::get_root() {
-    return this->tree_root;
-}
-
-MCT::MCT() {
-    State s;
-    for(int i = 0; i < BOARD_SIZE; ++i) {
-        for(int j = 0; j < BOARD_SIZE; ++j) {
-            s.board[i][j] = None;
-        }
-    }
-    this->tree_root = new MCTNode(s, Black);
-}
-
-MCT::~MCT() {
-    delete this->tree_root;    
+    for (auto child : children) if(child != nullptr) delete child;
 }
 
 MCTS::MCTS() {
-    this->tree = new MCT();
+    this->root = new MCTNode(Black, nullptr);
 }
-
 
 MCTS::~MCTS() {
-    delete this->tree;
+    delete this->root;
 }
-
-void MCTS::init_game() {
-    this->now_state = this->tree->get_root();
-    this->now_player = Black;
-}
-
 
 MCTNode *MCTS::selection() {
-    MCTNode *node = this->now_state;
+    MCTNode *node = this->root;
     while(!node->children.empty()) {
         double best_score = -std::numeric_limits<double>::max();
-        MCTNode* best_child = nullptr;
-        for (auto child : node->children) {
-            if(child->visits == 0) return child;
+        int best_child_index = -1;
+        for(int i = 0; i < node->children.size(); ++i) {
+            auto child = node->children[i];
+            if(child->visits == 0) {
+                game->move(node->actions[i]);
+                return child;
+            }
             double score = (double)child->wins / child->visits + std::sqrt(2 * std::log(node->visits) / child->visits);
             if (score <= best_score) continue;
             best_score = score;
-            best_child = child;
+            best_child_index = i;
         }
-        log(Debug, fstring("best score: %lf", best_score));
-        if(best_child == nullptr) {
-            log(Error, "best_child is nullptr when selection");
-            return node;
-        }
-        node = best_child;
+        game->move(node->actions[best_child_index]);
+        node = node->children[best_child_index];
     }
     return node;
 }
 
 void MCTS::expansion(MCTNode *node) {
-    if (!node->children.empty()) {
-        log(Warning, "expansion a node twice");
-        return;
-    }
-    State &s = node->state;
-    for(int i = 0; i < BOARD_SIZE; ++i) {
-        for(int j = 0; j < BOARD_SIZE; ++j) {
-            if(s.board[i][j] != None) continue;
-            State new_state = s;
-            new_state.board[i][j] = node->player;
-            Player nextPlayer = Gobang::next_player(node->player);
-            MCTNode* child = new MCTNode(new_state, nextPlayer, node);
-            node->children.push_back(child);
-            node->actions.push_back(std::make_pair(i, j));
-        }
+    auto moves = game->get_legal_moves();
+    for(auto move : moves) {
+        node->children.push_back(new MCTNode(game->next_player(node->player), node));
+        node->actions.push_back(move);
     }
 }
 
-Player MCTS::simulation(State state, Player player) {
-    Player winner = Gobang::get_winner(state);
-    while(winner == None) {
-        std::vector<Action> moves;
-        for(int i = 0; i < BOARD_SIZE; ++i) {
-            for(int j = 0; j < BOARD_SIZE; ++j) {
-                if(state.board[i][j] != None) continue;
-                moves.push_back(std::make_pair(i, j));
-            }
-        }
-        if(moves.empty()) return None;
+Player MCTS::simulation() {
+    int size = game->get_step();
+    while(!game->over) {
+        auto moves = game->get_legal_moves();
         Action move = moves[random(moves.size())];
-        state.board[move.first][move.second] = player;
-        player = Gobang::next_player(player);
-        winner = Gobang::get_winner(state, move.first, move.second);
+        game->move(move);
     }
+    Player winner = game->winner;
+    while(game->get_step() > size) game->undo();
     return winner;
 }
 
@@ -197,14 +71,17 @@ void MCTS::backup(MCTNode *node, Player winner) {
 }
 
 void MCTS::think_once() {
+    int size = game->get_step();
     MCTNode *leaf = this->selection();
     this->expansion(leaf);
     if(!leaf->children.empty()) {
         int index = random(leaf->children.size());
+        game->move(leaf->actions[index]);
         leaf = leaf->children[index];
     }
-    Player winner = this->simulation(leaf->state, leaf->player);
+    Player winner = this->simulation();
     backup(leaf, winner);
+    while(game->get_step() > size) game->undo();
 }
 
 void MCTS::think_by_times(int times) {
@@ -242,39 +119,69 @@ void MCTS::think_by_time(std::chrono::duration<double> limit) {
 }
 
 Action MCTS::take_action() {
-    if(now_state->children.empty()) return std::make_pair(-1, -1);
+    if(root == nullptr || root->children.empty()) return std::make_pair(-1, -1);
     int index = 0;
-    for(int i = 1; i < now_state->children.size(); ++i) {
-        if(now_state->children[i]->visits > now_state->children[index]->visits) {
+    for(int i = 1; i < root->children.size(); ++i) {
+        if(root->children[i]->visits > root->children[index]->visits) {
             index = i;
         }
     }
-    Action ret = now_state->actions[index];
-    now_state = now_state->children[index];
-    now_player = Gobang::next_player(now_player);
+    auto selected = root->children[index];
+    Action ret = root->actions[index];
+    root->children[index] = nullptr;
+    delete root;
+    root = selected;
+    root->parent = nullptr;
     return ret;
 }
 
-void MCTS::print_winning_rate() {
-    double p[BOARD_SIZE][BOARD_SIZE];
-    for(int i = 0; i < BOARD_SIZE; ++i) {
-        for(int j = 0; j < BOARD_SIZE; ++j) {
-            p[i][j] = 0;
-        }
-    }
-    for(int i = 0; i < now_state->children.size(); ++i) {
-        p[now_state->actions[i].first][now_state->actions[i].second] = -1;
-        if(now_state->children[i]->visits == 0) continue;
-        p[now_state->actions[i].first][now_state->actions[i].second] = now_state->children[i]->wins / now_state->children[i]->visits;
-    }
-    for(int i = 0; i < BOARD_SIZE; ++i) {
-        for(int j = 0; j < BOARD_SIZE; ++j) {
-            printf("%6.1lf ", p[i][j] * 100);
-        }
-        putchar('\n');
-    }
-}
+// void MCTS::print_winning_rate() {
+//     double p[BOARD_SIZE][BOARD_SIZE];
+//     for(int i = 0; i < BOARD_SIZE; ++i) {
+//         for(int j = 0; j < BOARD_SIZE; ++j) {
+//             p[i][j] = 0;
+//         }
+//     }
+//     double pass_p = -1;
+//     for(int i = 0; i < root->children.size(); ++i) {
+//         double pro = -1;
+//         if(root->children[i]->visits == 0) continue;
+//         pro = root->children[i]->wins / root->children[i]->visits;
+//         if(root->actions[i].first == -1) {
+//             pass_p = pro;
+//         } else {
+//             p[root->actions[i].first][root->actions[i].second] = pro;
+//         }
+//             }
+//     for(int i = 0; i < BOARD_SIZE; ++i) {
+//         for(int j = 0; j < BOARD_SIZE; ++j) {
+//             printf("%6.1lf ", p[i][j] * 100);
+//         }
+//         putchar('\n');
+//     }
+//     printf("%6.1lf\n", pass_p * 100);
+// }
 
-void MCTS::serialize() {
-    tree->serialize("save.json");
-}
+// void MCTS::print_visit_times() {
+//     int p[BOARD_SIZE][BOARD_SIZE];
+//     for(int i = 0; i < BOARD_SIZE; ++i) {
+//         for(int j = 0; j < BOARD_SIZE; ++j) {
+//             p[i][j] = 0;
+//         }
+//     }
+//     int pass_p = -1;
+//     for(int i = 0; i < root->children.size(); ++i) {
+//         if(root->actions[i].first == -1) {
+//             pass_p = root->children[i]->visits;
+//         } else {
+//             p[root->actions[i].first][root->actions[i].second] = root->children[i]->visits;
+//         }
+//     }
+//     for(int i = 0; i < BOARD_SIZE; ++i) {
+//         for(int j = 0; j < BOARD_SIZE; ++j) {
+//             printf("%6d ", p[i][j]);
+//         }
+//         putchar('\n');
+//     }
+//     printf("%6d\n", pass_p);
+// }

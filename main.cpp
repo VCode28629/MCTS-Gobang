@@ -1,64 +1,65 @@
 #include<cstdio>
-#include"game.h"
+#include "games/games.h"
 #include"mcts.h"
 #include <exception>
 #include <iostream>
+#include "utils.h"
+#include "log.h"
 
-MCTS mcts;
 
-void print_board(GameState s, int x=-1, int y=-1) {
-    printf("  ");
-    for(int i = 0; i < BOARD_SIZE; ++i) {
-        printf(" %02d", i);
-    }
-    putchar('\n');
-    for(int i = 0; i < BOARD_SIZE; ++i) {
-        printf("%02d", i);
-        for(int j = 0; j < BOARD_SIZE; ++j) {
-            // if(x == i && y == j) printf("\033[31m");
-            if(s.board[i][j] == None) {
-                printf("  .");
-            } else if(s.board[i][j] == Black) {
-                printf("  X");
-            } else if(s.board[i][j] == White) {
-                printf("  O");
-            }
-            // if(x == i && y == j) printf("\033[0m");
-        }
-        putchar('\n');
-    }
+void print_board(GoState s, int x=-1, int y=-1) {
+    // printf("  ");
+    // for(int i = 0; i < BOARD_SIZE; ++i) {
+    //     printf(" %02d", i);
+    // }
+    // putchar('\n');
+    // for(int i = 0; i < BOARD_SIZE; ++i) {
+    //     printf("%02d", i);
+    //     for(int j = 0; j < BOARD_SIZE; ++j) {
+    //         // if(x == i && y == j) printf("\033[31m");
+    //         if(s.board[i][j] == None) {
+    //             printf("  .");
+    //         } else if(s.board[i][j] == Black) {
+    //             printf("  X");
+    //         } else if(s.board[i][j] == White) {
+    //             printf("  O");
+    //         }
+    //         // if(x == i && y == j) printf("\033[0m");
+    //     }
+    //     putchar('\n');
+    // }
 }
 
 void game() {
-    GameState s;
-    Player player = Black;
-    for(int i = 0; i < BOARD_SIZE; ++i) {
-        for(int j = 0; j < BOARD_SIZE; ++j) {
-            s.board[i][j] = None;
-        }
-    }
-    mcts.init_game();
+    MCTS mcts;
+    Gobang game;
+    mcts.game = &game;
     Player winner = None;
+
     int step = 0;
-    print_board(s);
+    // print_board(game.state);
     while(winner == None) {
-        mcts.think_by_time(std::chrono::seconds(5));
-        mcts.print_winning_rate();
+        log(Info, fstring("step: %d", game.get_step()));
+        mcts.think_by_time(std::chrono::seconds(2));
+        // mcts.print_winning_rate();
+        // mcts.print_visit_times();
         Action action = mcts.take_action();
-        s.board[action.first][action.second] = player;
         step += 1;
-        printf("Move %d: %s %02d %02d\n", step, player == Black ? "Black" : "White", action.first, action.second);
-        player = Gobang::next_player(player);
-        winner = Gobang::get_winner(s, action.first, action.second);
-        print_board(s, action.first, action.second);
-        if(step == BOARD_SIZE * BOARD_SIZE) {
-            printf("Balanced\n");
-            mcts.serialize();
-            return;
+        printf("Move %d: %s %02d %02d\n", step, game.player == Black ? "Black" : "White", action.first, action.second);
+        game.move(action);
+        // print_board(game.state, action.first, action.second);
+        if(game.over) {
+            winner = game.winner;
+            break;
         }
     }
-    printf("winner: %s\n", winner == Black ? "Black" : "White");
-    mcts.serialize();
+    if(winner = Black) {
+        puts("winner: Black");
+    } else if(winner = White) {
+        puts("winner: White");
+    } else {
+        puts("Balanced");
+    }
 }
 
 
