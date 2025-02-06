@@ -1,6 +1,6 @@
 #pragma once
 
-#include "game.h"
+#include "games/games.h"
 
 #include<vector>
 #include<chrono>
@@ -31,6 +31,6 @@ public:
     void think_by_times(int times);
     void think_by_time(std::chrono::duration<double>);
     Action take_action();
-    void print_winning_rate();
-    void print_visit_times();
+    // void print_winning_rate();
+    // void print_visit_times();
 };

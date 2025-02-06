@@ -1,4 +1,4 @@
-#include "game.h"
+#include "go.h"
 #include "utils.h"
 #include<queue>
 #include<unordered_set>
@@ -12,8 +12,8 @@ const int Go::step[4][2] = {
 };
 
 Go::Go() {
-    for(int i = 0; i < BOARD_SIZE; ++i) {
-        for(int j = 0; j < BOARD_SIZE; ++j) {
+    for(int i = 0; i < GO_BOARD_SIZE; ++i) {
+        for(int j = 0; j < GO_BOARD_SIZE; ++j) {
             state.board[i][j] = None;
         }
     }
@@ -25,7 +25,7 @@ Go::Go() {
     info_history.push(std::make_tuple(player, pass, over, winner));
 }
 
-int Go::count(const GameState &state, int sx, int sy, bool *colored) {
+int Go::count(const GoState &state, int sx, int sy, bool *colored) {
     int black = 0;
     int white = 0;
     int count = 0;
@@ -38,12 +38,12 @@ int Go::count(const GameState &state, int sx, int sy, bool *colored) {
         queue.pop();
         int x = top.first;
         int y = top.second;
-        colored[x * BOARD_SIZE + y] = true;
+        colored[x * GO_BOARD_SIZE + y] = true;
         ++count;
         for(int i = 0; i < 4; ++i) {
             int nx = x + step[i][0];
             int ny = y + step[i][1];
-            if(nx < 0 || ny < 0 || nx >= BOARD_SIZE || ny >= BOARD_SIZE) continue;
+            if(nx < 0 || ny < 0 || nx >= GO_BOARD_SIZE || ny >= GO_BOARD_SIZE) continue;
             if(state.board[nx][ny] == Black) ++black;
             if(state.board[nx][ny] == White) ++white;
             if(state.board[nx][ny] != state.board[sx][sy]) continue;
@@ -62,13 +62,13 @@ int Go::count(const GameState &state, int sx, int sy, bool *colored) {
     return 0;
 }
 
-Player Go::get_winner(const GameState &state) {
-    bool color[BOARD_SIZE * BOARD_SIZE];
+Player Go::get_winner(const GoState &state) {
+    bool color[GO_BOARD_SIZE * GO_BOARD_SIZE];
     memset(color, 0, sizeof(color));
     float black_win = -KOMI;
-    for(int i = 0; i < BOARD_SIZE * BOARD_SIZE; ++i) {
+    for(int i = 0; i < GO_BOARD_SIZE * GO_BOARD_SIZE; ++i) {
         if(color[i]) continue;
-        black_win += count(state, i / BOARD_SIZE, i % BOARD_SIZE, color);
+        black_win += count(state, i / GO_BOARD_SIZE, i % GO_BOARD_SIZE, color);
     }
     if(black_win > 0) return Black;
     if(black_win < 0) return White;
@@ -80,10 +80,10 @@ bool Go::can_move(Action action) {
     if(over) return false;
     if(action.first < 0 || 
        action.second < 0 || 
-       action.first >= BOARD_SIZE || 
-       action.second >= BOARD_SIZE) return true; // pass
+       action.first >= GO_BOARD_SIZE || 
+       action.second >= GO_BOARD_SIZE) return true; // pass
     if(this->state.board[action.first][action.second] != None) return false;
-    GameState state = next_state(this->state, player, action);
+    GoState state = next_state(this->state, player, action);
     if(state.board[action.first][action.second] != player) return false;
     for(auto &s : history) {
         if(s == state) return false;
@@ -91,8 +91,8 @@ bool Go::can_move(Action action) {
     return true;
 }
 
-void Go::try_eat(GameState &state, int sx, int sy) {
-    if(sx < 0 || sy < 0 || sx >= BOARD_SIZE || sy >= BOARD_SIZE) return;
+void Go::try_eat(GoState &state, int sx, int sy) {
+    if(sx < 0 || sy < 0 || sx >= GO_BOARD_SIZE || sy >= GO_BOARD_SIZE) return;
     if(state.board[sx][sy] == None) return;
     std::queue<std::pair<int, int> > queue;
     std::unordered_set<std::pair<int, int>, pair_hash> block;
@@ -106,7 +106,7 @@ void Go::try_eat(GameState &state, int sx, int sy) {
         for(int i = 0; i < 4; ++i) {
             int nx = x + step[i][0];
             int ny = y + step[i][1];
-            if(nx < 0 || ny < 0 || nx >= BOARD_SIZE || ny >= BOARD_SIZE) continue;
+            if(nx < 0 || ny < 0 || nx >= GO_BOARD_SIZE || ny >= GO_BOARD_SIZE) continue;
             if(state.board[nx][ny] == None) {
                 return;
             } 
@@ -121,7 +121,7 @@ void Go::try_eat(GameState &state, int sx, int sy) {
     }
 }
 
-GameState Go::next_state(GameState state, Player player, Action action) {
+GoState Go::next_state(GoState state, Player player, Action action) {
     state.board[action.first][action.second] = player;
     try_eat(state, action.first - 1, action.second);
     try_eat(state, action.first + 1, action.second);
@@ -132,7 +132,7 @@ GameState Go::next_state(GameState state, Player player, Action action) {
 }
 
 void Go::move(Action action) {
-    if(action.first < 0 || action.second < 0 || action.first >= BOARD_SIZE || action.second >= BOARD_SIZE) {
+    if(action.first < 0 || action.second < 0 || action.first >= GO_BOARD_SIZE || action.second >= GO_BOARD_SIZE) {
         if(pass) {
             over = true;
             winner = get_winner(state);
@@ -161,8 +161,8 @@ int Go::get_step() {
 
 std::vector<Action> Go::get_legal_moves() {
     std::vector<Action> moves;
-    for(int i = 0; i < BOARD_SIZE; ++i) {
-        for(int j = 0; j < BOARD_SIZE; ++j) {
+    for(int i = 0; i < GO_BOARD_SIZE; ++i) {
+        for(int j = 0; j < GO_BOARD_SIZE; ++j) {
             if(!can_move(std::make_pair(i, j))) continue;
             moves.push_back(std::make_pair(i, j));
         }

@@ -135,53 +135,53 @@ Action MCTS::take_action() {
     return ret;
 }
 
-void MCTS::print_winning_rate() {
-    double p[BOARD_SIZE][BOARD_SIZE];
-    for(int i = 0; i < BOARD_SIZE; ++i) {
-        for(int j = 0; j < BOARD_SIZE; ++j) {
-            p[i][j] = 0;
-        }
-    }
-    double pass_p = -1;
-    for(int i = 0; i < root->children.size(); ++i) {
-        double pro = -1;
-        if(root->children[i]->visits == 0) continue;
-        pro = root->children[i]->wins / root->children[i]->visits;
-        if(root->actions[i].first == -1) {
-            pass_p = pro;
-        } else {
-            p[root->actions[i].first][root->actions[i].second] = pro;
-        }
-            }
-    for(int i = 0; i < BOARD_SIZE; ++i) {
-        for(int j = 0; j < BOARD_SIZE; ++j) {
-            printf("%6.1lf ", p[i][j] * 100);
-        }
-        putchar('\n');
-    }
-    printf("%6.1lf\n", pass_p * 100);
-}
+// void MCTS::print_winning_rate() {
+//     double p[BOARD_SIZE][BOARD_SIZE];
+//     for(int i = 0; i < BOARD_SIZE; ++i) {
+//         for(int j = 0; j < BOARD_SIZE; ++j) {
+//             p[i][j] = 0;
+//         }
+//     }
+//     double pass_p = -1;
+//     for(int i = 0; i < root->children.size(); ++i) {
+//         double pro = -1;
+//         if(root->children[i]->visits == 0) continue;
+//         pro = root->children[i]->wins / root->children[i]->visits;
+//         if(root->actions[i].first == -1) {
+//             pass_p = pro;
+//         } else {
+//             p[root->actions[i].first][root->actions[i].second] = pro;
+//         }
+//             }
+//     for(int i = 0; i < BOARD_SIZE; ++i) {
+//         for(int j = 0; j < BOARD_SIZE; ++j) {
+//             printf("%6.1lf ", p[i][j] * 100);
+//         }
+//         putchar('\n');
+//     }
+//     printf("%6.1lf\n", pass_p * 100);
+// }
 
-void MCTS::print_visit_times() {
-    int p[BOARD_SIZE][BOARD_SIZE];
-    for(int i = 0; i < BOARD_SIZE; ++i) {
-        for(int j = 0; j < BOARD_SIZE; ++j) {
-            p[i][j] = 0;
-        }
-    }
-    int pass_p = -1;
-    for(int i = 0; i < root->children.size(); ++i) {
-        if(root->actions[i].first == -1) {
-            pass_p = root->children[i]->visits;
-        } else {
-            p[root->actions[i].first][root->actions[i].second] = root->children[i]->visits;
-        }
-    }
-    for(int i = 0; i < BOARD_SIZE; ++i) {
-        for(int j = 0; j < BOARD_SIZE; ++j) {
-            printf("%6d ", p[i][j]);
-        }
-        putchar('\n');
-    }
-    printf("%6d\n", pass_p);
-}
+// void MCTS::print_visit_times() {
+//     int p[BOARD_SIZE][BOARD_SIZE];
+//     for(int i = 0; i < BOARD_SIZE; ++i) {
+//         for(int j = 0; j < BOARD_SIZE; ++j) {
+//             p[i][j] = 0;
+//         }
+//     }
+//     int pass_p = -1;
+//     for(int i = 0; i < root->children.size(); ++i) {
+//         if(root->actions[i].first == -1) {
+//             pass_p = root->children[i]->visits;
+//         } else {
+//             p[root->actions[i].first][root->actions[i].second] = root->children[i]->visits;
+//         }
+//     }
+//     for(int i = 0; i < BOARD_SIZE; ++i) {
+//         for(int j = 0; j < BOARD_SIZE; ++j) {
+//             printf("%6d ", p[i][j]);
+//         }
+//         putchar('\n');
+//     }
+//     printf("%6d\n", pass_p);
+// }
