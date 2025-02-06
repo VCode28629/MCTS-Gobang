@@ -6,7 +6,6 @@
 #include "utils.h"
 #include "log.h"
 
-MCTS mcts;
 
 void print_board(GameState s, int x=-1, int y=-1) {
     printf("  ");
@@ -32,8 +31,8 @@ void print_board(GameState s, int x=-1, int y=-1) {
 }
 
 void game() {
+    MCTS mcts;
     Go game;
-    mcts.init_game();
     mcts.game = &game;
     Player winner = None;
 
@@ -41,7 +40,7 @@ void game() {
     print_board(game.state);
     while(winner == None) {
         log(Info, fstring("step: %d", game.get_step()));
-        mcts.think_by_time(std::chrono::seconds(19));
+        mcts.think_by_time(std::chrono::seconds(2));
         mcts.print_winning_rate();
         mcts.print_visit_times();
         Action action = mcts.take_action();

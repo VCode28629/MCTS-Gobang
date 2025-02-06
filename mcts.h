@@ -21,17 +21,8 @@ struct MCTNode {
     ~MCTNode();
 };
 
-class MCT {
-    MCTNode *tree_root;
-public:
-    MCT();
-    ~MCT();
-    inline MCTNode *get_root();
-};
-
 class MCTS {
-    MCT* tree;
-    MCTNode *now_state;
+    MCTNode *root;
 private:
     void think_once();
     MCTNode *selection();
@@ -42,7 +33,6 @@ public:
     Go *game;
     MCTS();
     ~MCTS();
-    void init_game();
     void think_by_times(int times);
     void think_by_time(std::chrono::duration<double>);
     Action take_action();

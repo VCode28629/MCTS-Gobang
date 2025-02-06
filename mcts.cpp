@@ -8,41 +8,19 @@
 MCTNode::MCTNode(Player p, MCTNode* par) : player(p), parent(par), wins(0), visits(0) {}
 
 MCTNode::~MCTNode() {
-    for (auto child : children) delete child;
-}
-
-MCTNode *MCT::get_root() {
-    return this->tree_root;
-}
-
-MCT::MCT() {
-    State s;
-    for(int i = 0; i < BOARD_SIZE; ++i) {
-        for(int j = 0; j < BOARD_SIZE; ++j) {
-            s.board[i][j] = None;
-        }
-    }
-    this->tree_root = new MCTNode(Black);
-}
-
-MCT::~MCT() {
-    delete this->tree_root;    
+    for (auto child : children) if(child != nullptr) delete child;
 }
 
 MCTS::MCTS() {
-    this->tree = new MCT();
+    this->root = new MCTNode(Black, nullptr);
 }
 
 MCTS::~MCTS() {
-    delete this->tree;
-}
-
-void MCTS::init_game() {
-    this->now_state = this->tree->get_root();
+    delete this->root;
 }
 
 MCTNode *MCTS::selection() {
-    MCTNode *node = this->now_state;
+    MCTNode *node = this->root;
     while(!node->children.empty()) {
         double best_score = -std::numeric_limits<double>::max();
         int best_child_index = -1;
@@ -106,7 +84,7 @@ Player MCTS::simulation() {
 }
 
 void MCTS::backup(MCTNode *node, Player winner) {
-    while(node != now_state->parent) {
+    while(node != nullptr) {
         ++node->visits;
         if(winner == None) node->wins += 0.5;
         else if(winner != node->player) {node->wins += 1;}
@@ -163,15 +141,19 @@ void MCTS::think_by_time(std::chrono::duration<double> limit) {
 }
 
 Action MCTS::take_action() {
-    if(now_state->children.empty()) return std::make_pair(-1, -1);
+    if(root == nullptr || root->children.empty()) return std::make_pair(-1, -1);
     int index = 0;
-    for(int i = 1; i < now_state->children.size(); ++i) {
-        if(now_state->children[i]->visits > now_state->children[index]->visits) {
+    for(int i = 1; i < root->children.size(); ++i) {
+        if(root->children[i]->visits > root->children[index]->visits) {
             index = i;
         }
     }
-    Action ret = now_state->actions[index];
-    now_state = now_state->children[index];
+    auto selected = root->children[index];
+    Action ret = root->actions[index];
+    root->children[index] = nullptr;
+    delete root;
+    root = selected;
+    root->parent = nullptr;
     return ret;
 }
 
@@ -183,14 +165,14 @@ void MCTS::print_winning_rate() {
         }
     }
     double pass_p = -1;
-    for(int i = 0; i < now_state->children.size(); ++i) {
+    for(int i = 0; i < root->children.size(); ++i) {
         double pro = -1;
-        if(now_state->children[i]->visits == 0) continue;
-        pro = now_state->children[i]->wins / now_state->children[i]->visits;
-        if(now_state->actions[i].first == -1) {
+        if(root->children[i]->visits == 0) continue;
+        pro = root->children[i]->wins / root->children[i]->visits;
+        if(root->actions[i].first == -1) {
             pass_p = pro;
         } else {
-            p[now_state->actions[i].first][now_state->actions[i].second] = pro;
+            p[root->actions[i].first][root->actions[i].second] = pro;
         }
             }
     for(int i = 0; i < BOARD_SIZE; ++i) {
@@ -210,11 +192,11 @@ void MCTS::print_visit_times() {
         }
     }
     int pass_p = -1;
-    for(int i = 0; i < now_state->children.size(); ++i) {
-        if(now_state->actions[i].first == -1) {
-            pass_p = now_state->children[i]->visits;
+    for(int i = 0; i < root->children.size(); ++i) {
+        if(root->actions[i].first == -1) {
+            pass_p = root->children[i]->visits;
         } else {
-            p[now_state->actions[i].first][now_state->actions[i].second] = now_state->children[i]->visits;
+            p[root->actions[i].first][root->actions[i].second] = root->children[i]->visits;
         }
     }
     for(int i = 0; i < BOARD_SIZE; ++i) {
