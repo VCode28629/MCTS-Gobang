@@ -27,8 +27,8 @@ MCTNode *MCTS::selection() {
         for (int i = 0; i < node->children.size(); ++i) {
             auto child = node->children[i];
             if (child->visits == 0) {
-                game->move(node->actions[i]);
-                return child;
+                best_child_index = i;
+                break;
             }
             double score =
                 (double)child->wins / child->visits +
@@ -59,9 +59,7 @@ Player MCTS::simulation() {
         Action move = moves[random(moves.size())];
         game->move(move);
     }
-    Player winner = game->winner;
-    while (game->get_step() > size) game->undo();
-    return winner;
+    return game->winner;
 }
 
 void MCTS::backup(MCTNode *node, Player winner) {
