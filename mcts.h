@@ -1,14 +1,9 @@
 #pragma once
 
 #include "game.h"
-#include "json.hpp"
 
 #include<vector>
 #include<chrono>
-
-using json = nlohmann::json;
-
-using State = GameState;
 
 struct MCTNode {
     Player player;
@@ -30,7 +25,7 @@ private:
     Player simulation();
     void backup(MCTNode *node, Player winner);
 public:
-    Go *game;
+    Game *game;
     MCTS();
     ~MCTS();
     void think_by_times(int times);

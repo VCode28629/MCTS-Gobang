@@ -146,3 +146,27 @@ void Go::move(Action action) {
     history.push_back(state);
     info_history.push(std::make_tuple(player, pass, over, winner));
 }
+
+
+void Go::undo() {
+    history.pop_back();
+    state = history.back();
+    info_history.pop();
+    std::tie(player, pass, over, winner) = info_history.top();
+}
+
+int Go::get_step() {
+    return history.size();
+}
+
+std::vector<Action> Go::get_legal_moves() {
+    std::vector<Action> moves;
+    for(int i = 0; i < BOARD_SIZE; ++i) {
+        for(int j = 0; j < BOARD_SIZE; ++j) {
+            if(!can_move(std::make_pair(i, j))) continue;
+            moves.push_back(std::make_pair(i, j));
+        }
+    }
+    if(can_move(std::make_pair(-1, -1))) moves.push_back({-1, -1});
+    return moves;
+}

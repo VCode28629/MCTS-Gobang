@@ -24,7 +24,25 @@ struct GameState {
 
 using Action = std::pair<int, int>;
 
-class Go {
+class Game {
+public:
+    GameState state;
+    Player player;
+    bool over;
+    Player winner;
+
+    virtual bool can_move(Action action)=0;
+    virtual std::vector<Action> get_legal_moves()=0;
+    virtual int get_step()=0;
+    virtual void move(Action action)=0;
+    virtual void undo()=0;
+    
+    virtual inline Player next_player(Player p) {
+        return static_cast<Player>(Black + White - p);
+    }
+};
+
+class Go : public Game {
     bool pass;
     std::vector<GameState> history;
     // player, pass, over, winner;
@@ -33,25 +51,12 @@ class Go {
     static int count(const GameState &state, int x, int y, bool *colored);
     static const int step[4][2];
     static Player get_winner(const GameState &state);
-public:
-    GameState state;
-    Player player;
-    bool over;
-    Player winner;
-    Go();
-    static inline Player next_player(Player p) {
-        return static_cast<Player>(Black + White - p);
-    }
-    bool can_move(Action action);
     static GameState next_state(GameState state, Player player, Action action);
-    void move(Action action);
-    int get_step() {
-        return history.size();
-    }
-    void rollback() {
-        history.pop_back();
-        state = history.back();
-        info_history.pop();
-        std::tie(player, pass, over, winner) = info_history.top();
-    }
+    bool can_move(Action action);
+public:
+    Go();
+    virtual int get_step();
+    virtual std::vector<Action> get_legal_moves();
+    virtual void move(Action action);
+    virtual void undo();
 };

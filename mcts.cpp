@@ -35,11 +35,6 @@ MCTNode *MCTS::selection() {
             best_score = score;
             best_child_index = i;
         }
-        log(Debug, fstring("best score: %lf", best_score));
-        if(best_child_index == -1) {
-            log(Error, "best_child is nullptr when selection");
-            return node;
-        }
         game->move(node->actions[best_child_index]);
         node = node->children[best_child_index];
     }
@@ -47,39 +42,22 @@ MCTNode *MCTS::selection() {
 }
 
 void MCTS::expansion(MCTNode *node) {
-    if (!node->children.empty()) {
-        log(Warning, "expansion a node twice");
-        return;
-    }
-    for(int i = 0; i < BOARD_SIZE; ++i) {
-        for(int j = 0; j < BOARD_SIZE; ++j) {
-            if(!game->can_move(std::make_pair(i, j))) continue;
-            node->children.push_back(new MCTNode(game->next_player(node->player), node));
-            node->actions.push_back(std::make_pair(i, j));
-        }
-    }
-    if(game->can_move(std::make_pair(-1, -1))) {
+    auto moves = game->get_legal_moves();
+    for(auto move : moves) {
         node->children.push_back(new MCTNode(game->next_player(node->player), node));
-        node->actions.push_back(std::make_pair(-1, -1));
+        node->actions.push_back(move);
     }
 }
 
 Player MCTS::simulation() {
     int size = game->get_step();
     while(!game->over) {
-        std::vector<Action> moves;
-        for(int i = 0; i < BOARD_SIZE; ++i) {
-            for(int j = 0; j < BOARD_SIZE; ++j) {
-                if(!game->can_move(std::make_pair(i, j))) continue;
-                moves.push_back(std::make_pair(i, j));
-            }
-        }
-        if(game->can_move(std::make_pair(-1, -1))) moves.push_back({-1, -1});
+        auto moves = game->get_legal_moves();
         Action move = moves[random(moves.size())];
         game->move(move);
     }
     Player winner = game->winner;
-    while(game->get_step() > size) game->rollback();
+    while(game->get_step() > size) game->undo();
     return winner;
 }
 
@@ -103,7 +81,7 @@ void MCTS::think_once() {
     }
     Player winner = this->simulation();
     backup(leaf, winner);
-    while(game->get_step() > size) game->rollback();
+    while(game->get_step() > size) game->undo();
 }
 
 void MCTS::think_by_times(int times) {
